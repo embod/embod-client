@@ -1,42 +1,8 @@
-# Embod client library
-
-## Dependencies
-
-Embod client library requires python 3.4 or above.
-
-```
-pip install -r requirements.txt
-```
-
-
-## AsyncClient
-
-The client uses asyncio to send and recieve action and states respectively from the embod.ai environment.
-
-```python
-self.client = AsyncClient(host, apikey, UUID(agent_id), self._state_callback)
-self.client.start()
-```
-
-**AsyncClient** calls an asynchronous state callback message when there is a new state.
-```python
-async def _state_callback(self, state, reward, error):
-    # Use the state and the reward to calculate the next action
-    
-    ...
-    
-    # Send the next action to the environment
-    await self.client.send_agent_action(next_action)
-```
-
-### Example 
-
-The following example calculates the number of states per second sent by the embod.ai server.
-
-for each state that is sent, an empty action vector is sent back to the server. 
-This means the agent will be visible in the environment, but it will not move.
-
-```python
+from embodclient import AsyncClient
+import argparse
+from datetime import datetime
+import numpy as np
+from uuid import UUID
 
 class FPSMonitor:
 
@@ -84,5 +50,15 @@ class FPSMonitor:
         self.client.start()
 
 
-```
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Test frames per second, example application.')
+    parser.add_argument('-p', required=True, dest='apikey', help='Your embod.ai API key')
+    parser.add_argument('-a', required=True, dest='agent_id', help='The id of the agent you want to control')
+    parser.add_argument('-H', default="wss://api.embod.ai", dest='host', help="The websocket host for the environment")
+
+    args = parser.parse_args()
+
+    fps = FPSMonitor()
+    fps.start(args.host, args.apikey, args.agent_id)
 

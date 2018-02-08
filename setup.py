@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 setup(
   name = 'embod-client',
   packages = ['embod-client'], # this must be the same as the name above
@@ -10,4 +10,8 @@ setup(
   download_url = 'https://github.com/embod/embod-client/archive/0.1.tar.gz', # I'll explain this in a second
   keywords = ['embod', 'environment', 'agents'], # arbitrary keywords
   classifiers = [],
+  install_requires = [
+    "websockets>=4.0.1",
+    "numpy>=1.13.1",
+  ]
 )
