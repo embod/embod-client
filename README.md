@@ -14,7 +14,7 @@ pip install -r requirements.txt
 The client uses asyncio to send and recieve action and states respectively from the embod.ai environment.
 
 ```python
-self.client = AsyncClient(host, apikey, UUID(agent_id), self._state_callback)
+self.client = AsyncClient(apikey, agent_id, self._state_callback)
 self.client.start()
 ```
 
