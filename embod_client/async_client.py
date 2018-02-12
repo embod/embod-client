@@ -87,7 +87,8 @@ class Client:
 
         except websockets.ConnectionClosed as e:
             self._logger.error("Connection closed, cannot recieve more messages", e)
-
+        finally:
+            await self._websocket.close()
 
     def start(self):
         asyncio.get_event_loop().run_until_complete(self._start_async())
