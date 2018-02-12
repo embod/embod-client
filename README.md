@@ -79,8 +79,8 @@ class FPSMonitor:
         if self.frame_count == self.max_frame_count:
             self.client.stop()
 
-    def start(self, host, apikey, agent_id):
-        self.client = AsyncClient(host, apikey, UUID(agent_id), self._state_callback)
+    def start(self, apikey, agent_id):
+        self.client = AsyncClient(apikey, agent_id, self._state_callback)
         self.client.start()
 
 

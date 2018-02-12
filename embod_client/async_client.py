@@ -16,20 +16,22 @@ class Client:
 
     ERROR = bytes([255])
 
-    def __init__(self, host, apikey, agent_id, state_callback):
+    def __init__(self, apikey, agent_id, state_callback, host="wss://api.embod.ai"):
         """
 
-        :param apikey:
-        :param state_callback:
+        :param apikey: api key string
+        :param agent_id: agent id string
+        :param state_callback: callback method for states
+        :param host: server hostname, defaults to wss://api.embod.ai
         """
 
-        self._agent_id = agent_id
+        self._agent_id = UUID(agent_id)
 
         self._state_callback = state_callback
 
         self._running = False
 
-        self._logger = logging.getLogger("embodclient")
+        self._logger = logging.getLogger("embod_client")
 
         self._apikey = apikey
 
@@ -82,6 +84,7 @@ class Client:
             while self._running:
                 message = await self._websocket.recv()
                 await self._handle_message_async(message)
+
         except websockets.ConnectionClosed as e:
             self._logger.error("Connection closed, cannot recieve more messages", e)
 
