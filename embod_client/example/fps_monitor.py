@@ -45,8 +45,8 @@ class FPSMonitor:
         if self.frame_count == self.max_frame_count:
             self.client.stop()
 
-    def start(self, apikey, agent_id):
-        self.client = AsyncClient(apikey, UUID(agent_id), self._state_callback)
+    def start(self, apikey, agent_id, host):
+        self.client = AsyncClient(apikey, agent_id, self._state_callback, host)
         self.client.start()
 
 
@@ -60,5 +60,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     fps = FPSMonitor()
-    fps.start(args.host, args.apikey, args.agent_id)
+    fps.start(args.apikey, args.agent_id, args.host)
 
