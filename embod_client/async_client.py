@@ -113,7 +113,8 @@ class Client:
         try:
             if message_type == Client.AGENT_STATE:
                 reward = unpack_from(">f", data, 21)[0]
-                state = unpack_from(">25f", data, 25)
+                state_floats = (message_size-4)/4
+                state = unpack_from(">%df" % state_floats, data, 25)
             elif message_type == Client.ERROR:
                 error = state = unpack_from("%ds" % message_size, data, 21)
         except:
