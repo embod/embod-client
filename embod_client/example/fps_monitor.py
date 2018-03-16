@@ -10,7 +10,7 @@ class FPSMonitor:
         self.times = []
 
         self.frame_count = 0
-        self.max_frame_count = 500
+        self.max_frame_count = 50000
 
         self.frame_time = np.zeros(self.max_frame_count)
         self.last_time = None
@@ -23,6 +23,11 @@ class FPSMonitor:
         :param error: If there are any errors reported from the environment
         :return:
         """
+
+        if error:
+            print("Error: %s" % error.decode('UTF-8'))
+            self.client.stop()
+            return
 
         current_time = datetime.utcnow()
 
@@ -61,4 +66,5 @@ if __name__ == "__main__":
 
     fps = FPSMonitor()
     fps.start(args.apikey, args.agent_id, args.host)
+    print("blah stuff blah")
 
