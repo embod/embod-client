@@ -2,7 +2,6 @@ from embod_client import AsyncClient
 import argparse
 from datetime import datetime
 import numpy as np
-from uuid import UUID
 
 class FPSMonitor:
 
@@ -66,5 +65,4 @@ if __name__ == "__main__":
 
     fps = FPSMonitor()
     fps.start(args.apikey, args.agent_id, args.host)
-    print("blah stuff blah")
 
