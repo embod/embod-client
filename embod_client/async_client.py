@@ -16,10 +16,10 @@ class Client:
 
     ERROR = bytes([255])
 
-    def __init__(self, apikey, agent_id, state_callback, host="wss://api.embod.ai"):
+    def __init__(self, api_key, agent_id, state_callback, host="wss://api.embod.ai"):
         """
 
-        :param apikey: api key string
+        :param api_key: api key string
         :param agent_id: agent id string
         :param state_callback: callback method for states
         :param host: server hostname, defaults to wss://api.embod.ai
@@ -33,7 +33,7 @@ class Client:
 
         self._logger = logging.getLogger("embod_client")
 
-        self._apikey = apikey
+        self._api_key = api_key
 
         self._endpoint = host+"/v0/agent/control"
 
@@ -67,28 +67,47 @@ class Client:
 
     async def _start_async(self):
 
-        try:
-            self._websocket = await websockets.connect("%s?apikey=%s" % (self._endpoint, self._apikey))
-            self._logger.info("Connected to %s" % self._endpoint)
-            self._connected = True
-        except:
-            self._logger.error("Cannot connect to %s" % self._endpoint)
-            self._connected = False
-            return
+        retries = 0
 
-        await self._add_agent()
+        while retries < 10:
 
-        self._running = True
+            try:
+                self._websocket = await websockets.connect("%s?apikey=%s" % (self._endpoint, self._api_key), timeout=10)
+                self._logger.info("Connected to %s" % self._endpoint)
+                self._connected = True
+            except websockets.InvalidStatusCode as e:
+                self._logger.error("Cannot connect to %s. Status code: %d" % (self._endpoint, e.status_code))
+                self._connected = False
+                break
+            except ConnectionRefusedError as e:
+                self._logger.error("Cannot connect to %s" % (self._endpoint))
+                self._connected = False
 
-        try:
-            while self._running:
-                message = await self._websocket.recv()
-                await self._handle_message_async(message)
+            await self._add_agent()
 
-        except websockets.ConnectionClosed as e:
-            self._logger.error("Connection closed, cannot recieve more messages", e)
-        finally:
-            await self._websocket.close()
+            print("View your agent here -> https://app.embod.ai/andromeda/view/%s" % self._agent_id)
+
+            self._running = True
+
+            try:
+                while self._running:
+                    message = await asyncio.wait_for(self._websocket.recv(), timeout=1)
+                    await self._handle_message_async(message)
+
+            except websockets.ConnectionClosed as e:
+                self._logger.error("Connection closed, cannot recieve more messages")
+                retries = 0
+            finally:
+                if self._websocket is not None:
+                    await self._websocket.close()
+                self._connected = False
+                if self._running == False:
+                    return
+
+
+            retries+=1
+            self._logger.error("disconnection detected, retying connection..")
+            await asyncio.sleep(1)
 
     def start(self):
         asyncio.get_event_loop().run_until_complete(self._start_async())
@@ -113,11 +132,12 @@ class Client:
         try:
             if message_type == Client.AGENT_STATE:
                 reward = unpack_from(">f", data, 21)[0]
-                state = unpack_from(">25f", data, 25)
+                state_floats = (message_size-4)/4
+                state = unpack_from(">%df" % state_floats, data, 25)
             elif message_type == Client.ERROR:
-                error = state = unpack_from("%ds" % message_size, data, 21)
+                error = state = unpack_from("%ds" % message_size, data, 21)[0]
         except:
-            self._logger.warn("invalid message received")
+            self._logger.warning("invalid message received")
 
         await self._state_callback(state, reward, error)
 

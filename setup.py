@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'embod_client',
   packages = ['embod_client'], # this must be the same as the name above
-  version = '0.0.3',
+  version = '0.0.7',
   description = 'Client library for controlling agents in embod.ai environments',
   author = 'Chris Bamford',
   author_email = 'chris.bamford@embod.ai',

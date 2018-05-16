@@ -14,7 +14,9 @@ pip install -r requirements.txt
 The client uses asyncio to send and recieve action and states respectively from the embod.ai environment.
 
 ```python
-self.client = AsyncClient(host, apikey, UUID(agent_id), self._state_callback)
+from embod_client import AsyncClient
+
+self.client = AsyncClient(api_key, agent_id, self._state_callback)
 self.client.start()
 ```
 
@@ -79,8 +81,8 @@ class FPSMonitor:
         if self.frame_count == self.max_frame_count:
             self.client.stop()
 
-    def start(self, apikey, agent_id):
-        self.client = AsyncClient(apikey, agent_id, self._state_callback)
+    def start(self, api_key, agent_id):
+        self.client = AsyncClient(api_key, agent_id, self._state_callback)
         self.client.start()
 
 

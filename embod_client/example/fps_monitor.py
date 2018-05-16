@@ -2,7 +2,6 @@ from embod_client import AsyncClient
 import argparse
 from datetime import datetime
 import numpy as np
-from uuid import UUID
 
 class FPSMonitor:
 
@@ -10,7 +9,7 @@ class FPSMonitor:
         self.times = []
 
         self.frame_count = 0
-        self.max_frame_count = 500
+        self.max_frame_count = 50000
 
         self.frame_time = np.zeros(self.max_frame_count)
         self.last_time = None
@@ -23,6 +22,11 @@ class FPSMonitor:
         :param error: If there are any errors reported from the environment
         :return:
         """
+
+        if error:
+            print("Error: %s" % error.decode('UTF-8'))
+            self.client.stop()
+            return
 
         current_time = datetime.utcnow()
 
@@ -45,8 +49,8 @@ class FPSMonitor:
         if self.frame_count == self.max_frame_count:
             self.client.stop()
 
-    def start(self, apikey, agent_id):
-        self.client = AsyncClient(apikey, UUID(agent_id), self._state_callback)
+    def start(self, apikey, agent_id, host):
+        self.client = AsyncClient(apikey, agent_id, self._state_callback, host)
         self.client.start()
 
 
@@ -60,5 +64,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     fps = FPSMonitor()
-    fps.start(args.host, args.apikey, args.agent_id)
+    fps.start(args.apikey, args.agent_id, args.host)
 
