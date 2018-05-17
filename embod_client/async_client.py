@@ -16,10 +16,10 @@ class Client:
 
     ERROR = bytes([255])
 
-    def __init__(self, apikey, agent_id, state_callback, host="wss://api.embod.ai"):
+    def __init__(self, api_key, agent_id, state_callback, host="wss://api.embod.ai"):
         """
 
-        :param apikey: api key string
+        :param api_key: api key string
         :param agent_id: agent id string
         :param state_callback: callback method for states
         :param host: server hostname, defaults to wss://api.embod.ai
@@ -33,7 +33,7 @@ class Client:
 
         self._logger = logging.getLogger("embod_client")
 
-        self._apikey = apikey
+        self._api_key = api_key
 
         self._endpoint = host+"/v0/agent/control"
 
@@ -72,7 +72,7 @@ class Client:
         while retries < 10:
 
             try:
-                self._websocket = await websockets.connect("%s?apikey=%s" % (self._endpoint, self._apikey), timeout=10)
+                self._websocket = await websockets.connect("%s?apikey=%s" % (self._endpoint, self._api_key), timeout=10)
                 self._logger.info("Connected to %s" % self._endpoint)
                 self._connected = True
             except websockets.InvalidStatusCode as e:
@@ -84,6 +84,8 @@ class Client:
                 self._connected = False
 
             await self._add_agent()
+
+            print("View your agent here -> https://app.embod.ai/andromeda/view/%s" % self._agent_id)
 
             self._running = True
 
@@ -135,7 +137,7 @@ class Client:
             elif message_type == Client.ERROR:
                 error = state = unpack_from("%ds" % message_size, data, 21)[0]
         except:
-            self._logger.warn("invalid message received")
+            self._logger.warning("invalid message received")
 
         await self._state_callback(state, reward, error)
 
