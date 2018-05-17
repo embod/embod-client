@@ -85,7 +85,7 @@ class Client:
 
             await self._add_agent()
 
-            print("View your agent here -> https://app.embod.ai/andromeda/view/%s" % self._agent_id)
+            print("View your agent here -> https://app.embod.ai/andromeda/view/%s" % str(self._agent_id))
 
             self._running = True
 
