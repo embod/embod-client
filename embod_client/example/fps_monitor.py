@@ -40,7 +40,7 @@ class FPSMonitor:
 
 
         # Send an empty state, so the agent does not move anywhere
-        await self.client.send_agent_action(np.zeros(3))
+        await self.client.send_agent_action(np.zeros(self.client._action_size))
 
         self.last_time = current_time
 

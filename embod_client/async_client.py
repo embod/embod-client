@@ -13,6 +13,7 @@ class Client:
     REMOVE_AGENT = bytes([1])
     AGENT_ACTION = bytes([2])
     AGENT_STATE = bytes([3])
+    AGENT_ADDED = bytes([4])
 
     ERROR = bytes([255])
 
@@ -85,8 +86,6 @@ class Client:
 
             await self._add_agent()
 
-            print("View your agent here -> https://app.embod.ai/andromeda/view/%s" % str(self._agent_id))
-
             self._running = True
 
             try:
@@ -130,7 +129,26 @@ class Client:
         reward = None
 
         try:
-            if message_type == Client.AGENT_STATE:
+            if message_type == Client.AGENT_ADDED:
+                environment_id_bytes = unpack_from(">16s", data, 21)[0]
+                environment_id = UUID(bytes=environment_id_bytes)
+
+                name_length = (message_size - 24);
+                environment_name = unpack_from(">%ds" % name_length, data, 37)[0]
+                state_size = unpack_from(">i", data, 37 + name_length)[0]
+                action_size = unpack_from(">i", data, 37 +name_length + 4)[0]
+
+                self._environment_id = environment_id
+                self._environment_name = environment_name.decode('utf-8')
+                self._state_size = state_size
+                self._action_size = action_size
+
+                self._logger.info("agent added to environment %s:%s" % (str(self._environment_id), self._environment_name))
+
+                print("View your agent here -> https://app.embod.ai/%s/view/%s" % (self._environment_name, str(self._agent_id)))
+                return
+
+            elif message_type == Client.AGENT_STATE:
                 reward = unpack_from(">f", data, 21)[0]
                 state_floats = (message_size-4)/4
                 state = unpack_from(">%df" % state_floats, data, 25)

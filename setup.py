@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'embod_client',
   packages = ['embod_client'], # this must be the same as the name above
-  version = '0.0.8',
+  version = '0.1.0',
   description = 'Client library for controlling agents in embod.ai environments',
   author = 'Chris Bamford',
   author_email = 'chris.bamford@embod.ai',
@@ -12,6 +12,6 @@ setup(
   classifiers = [],
   install_requires = [
     "websockets>=4.0.1",
-    "numpy>=1.13.1",
+    "numpy>=1.14.1",
   ]
 )
