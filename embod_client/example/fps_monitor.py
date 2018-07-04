@@ -10,7 +10,7 @@ class FPSMonitor:
         self._times = []
 
         self._frame_count = 0
-        self._max_frame_count = 500
+        self._max_frame_count = 1000
 
         self._frame_time = np.zeros(self._max_frame_count)
         self._last_time = None

@@ -157,7 +157,7 @@ class Client:
 
                 self._logger.info("agent added to environment %s:%s" % (str(self._environment_id), self._environment_name))
 
-                print("View your agent here -> https://app.embod.ai/%s/view/%s" % (self._environment_name, str(resource_id)))
+                print("View your agent here -> https://app.embod.ai/%s/view/%s" % (self._environment_name.lower(), str(resource_id)))
                 return
 
             elif message_type == Client.AGENT_STATE:
