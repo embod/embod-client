@@ -3,6 +3,7 @@ from struct import pack_into, unpack_from
 import asyncio
 import websockets
 import logging
+from concurrent import futures
 
 class Client:
     """
@@ -17,16 +18,15 @@ class Client:
 
     ERROR = bytes([255])
 
-    def __init__(self, api_key, agent_id, state_callback, host="wss://api.embod.ai"):
+    def __init__(self, api_key, connect_callback, state_callback, host="wss://api.embod.ai"):
         """
 
         :param api_key: api key string
-        :param agent_id: agent id string
         :param state_callback: callback method for states
         :param host: server hostname, defaults to wss://api.embod.ai
         """
 
-        self._agent_id = UUID(agent_id)
+        self._connect_callback = connect_callback
 
         self._state_callback = state_callback
 
@@ -38,39 +38,39 @@ class Client:
 
         self._endpoint = host+"/v0/agent/control"
 
-    async def _add_agent(self):
+    async def _add_agent(self, agent_id):
         """
 
         :param agent_id:
         :return:
         """
 
-        await self._send_message_async(Client.ADD_AGENT, self._agent_id)
-        self._logger.info("Adding agent %s to environment" % self._agent_id)
+        await self._send_message_async(Client.ADD_AGENT, agent_id)
+        self._logger.info("Adding agent %s to environment" % agent_id)
 
-    async def _remove_agent(self):
+    async def _remove_agent(self, agent_id):
         """
 
         :param agent_id:
         :return:
         """
 
-        await self._send_message_async(Client.REMOVE_AGENT, self._agent_id)
-        self._logger.info("Removing agent %s from environment" % self._agent_id)
+        await self._send_message_async(Client.REMOVE_AGENT, agent_id)
+        self._logger.info("Removing agent %s from environment" % agent_id)
 
-    async def send_agent_action(self, action):
+    async def send_agent_action(self, agent_id, action):
         """
 
         :return:
         """
 
-        await self._send_message_async(Client.AGENT_ACTION, self._agent_id, action)
+        await self._send_message_async(Client.AGENT_ACTION, agent_id, action)
 
     async def _start_async(self):
 
         retries = 0
 
-        while retries < 10:
+        while retries < 3:
 
             try:
                 self._websocket = await websockets.connect("%s?apikey=%s" % (self._endpoint, self._api_key), timeout=10)
@@ -84,14 +84,26 @@ class Client:
                 self._logger.error("Cannot connect to %s" % (self._endpoint))
                 self._connected = False
 
-            await self._add_agent()
+            await self._connect_callback()
 
             self._running = True
 
             try:
+                timeout_retries = 0
                 while self._running:
-                    message = await asyncio.wait_for(self._websocket.recv(), timeout=1)
-                    await self._handle_message_async(message)
+
+                    try:
+                        message = await asyncio.wait_for(self._websocket.recv(), timeout=1)
+                        await self._handle_message_async(message)
+                    except futures._base.TimeoutError:
+                        timeout_retries += 1
+                        self._logger.error("Timeout waiting for message from server")
+                        if timeout_retries == 5:
+                            if self._websocket is not None:
+                                await self._websocket.close()
+                            self._connected = False
+                            if self._running == False:
+                                return
 
             except websockets.ConnectionClosed as e:
                 self._logger.error("Connection closed, cannot recieve more messages")
@@ -133,7 +145,7 @@ class Client:
                 environment_id_bytes = unpack_from(">16s", data, 21)[0]
                 environment_id = UUID(bytes=environment_id_bytes)
 
-                name_length = (message_size - 24);
+                name_length = (message_size - 24)
                 environment_name = unpack_from(">%ds" % name_length, data, 37)[0]
                 state_size = unpack_from(">i", data, 37 + name_length)[0]
                 action_size = unpack_from(">i", data, 37 +name_length + 4)[0]
@@ -145,7 +157,7 @@ class Client:
 
                 self._logger.info("agent added to environment %s:%s" % (str(self._environment_id), self._environment_name))
 
-                print("View your agent here -> https://app.embod.ai/%s/view/%s" % (self._environment_name, str(self._agent_id)))
+                print("View your agent here -> https://app.embod.ai/%s/view/%s" % (self._environment_name, str(resource_id)))
                 return
 
             elif message_type == Client.AGENT_STATE:
@@ -157,7 +169,7 @@ class Client:
         except:
             self._logger.warning("invalid message received")
 
-        await self._state_callback(state, reward, error)
+        await self._state_callback(resource_id, state, reward, error)
 
 
     async def _send_message_async(self, message_type, resource_id, data=None):
